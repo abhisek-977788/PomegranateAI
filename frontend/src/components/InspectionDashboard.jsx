@@ -37,9 +37,11 @@ export function InspectionDashboard() {
           <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
           <div>
             <p className="text-red-400 font-semibold">
-              {error.includes('not a pomegranate') ? 'Validation Failed' : 'Inference Failed'}
+              {String(error).includes('not a pomegranate') ? 'Validation Failed' : 'Inference Failed'}
             </p>
-            <p className="text-red-300/90 text-sm mt-0.5 font-medium">{error}</p>
+            <p className="text-red-300/90 text-sm mt-0.5 font-medium">
+              {typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}
+            </p>
             {!error.includes('not a pomegranate') && (
               <p className="text-gray-500 text-xs mt-1">
                 Ensure the ML service is running at the configured URL.

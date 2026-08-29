@@ -26,7 +26,8 @@ export function AuthModal({ isOpen, onClose }) {
       }
       onClose()
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Authentication failed.')
+      const raw = err.response?.data?.error || err.message || 'Authentication failed.'
+      setError(typeof raw === 'string' ? raw : (raw.message || JSON.stringify(raw)))
     } finally {
       setLoading(false)
     }
@@ -59,7 +60,7 @@ export function AuthModal({ isOpen, onClose }) {
         {error && (
           <div className="mb-4 flex items-center gap-2 bg-red-950/50 border border-red-500/50 text-red-300 text-xs p-3 rounded-xl">
             <AlertCircle size={16} className="flex-shrink-0" />
-            <span>{error}</span>
+            <span>{typeof error === 'string' ? error : JSON.stringify(error)}</span>
           </div>
         )}
 

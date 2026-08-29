@@ -24,7 +24,9 @@ export class ErrorBoundary extends React.Component {
             </div>
             <h2 className="text-xl font-bold text-gray-100 mb-2">Something went wrong</h2>
             <p className="text-xs text-gray-400 mb-6">
-              {this.state.error?.message || 'A frontend rendering error occurred.'}
+              {typeof this.state.error === 'string'
+                ? this.state.error
+                : (this.state.error?.message || JSON.stringify(this.state.error || 'A rendering error occurred.'))}
             </p>
             <button
               onClick={() => {

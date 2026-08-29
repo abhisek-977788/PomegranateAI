@@ -21,7 +21,8 @@ export function useInspection() {
       setResults(data.results || [])
       return data
     } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Request failed'
+      const raw = err.response?.data?.error || err.message || 'Request failed'
+      const msg = typeof raw === 'string' ? raw : (raw?.message || JSON.stringify(raw))
       setError(msg)
       throw new Error(msg)
     } finally {
