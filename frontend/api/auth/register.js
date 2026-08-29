@@ -1,23 +1,10 @@
-const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const JWT_SECRET = process.env.JWT_SECRET || ']oz2L*|IkL5*yZ-&A*G.2cLVAYcM;5H0uWwE%d$jE!o';
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://abhisekpatel8917_db_user:Abhi1234@cluster0.epxf3si.mongodb.net/pomegranate_db?retryWrites=true&w=majority&appName=Cluster0';
 
-const inMemoryUsers = new Map();
-
-let User;
-try {
-  User = mongoose.model('User');
-} catch (e) {
-  const UserSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
-  }, { timestamps: true });
-  User = mongoose.model('User', UserSchema);
-}
+const userStore = global._userStore || new Map();
+global._userStore = userStore;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -35,47 +22,49 @@ module.exports = async (req, res) => {
       body = {};
     }
 
-    const { name, email, password } = body;
+    const name = body.name ? String(body.name).trim() : '';
+    const email = body.email ? String(body.email).trim().toLowerCase() : '';
+    const password = body.password ? String(body.password) : '';
+
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Please provide name, email, and password.' });
-    }
-    const normEmail = String(email).trim().toLowerCase();
-
-    if (mongoose.connection.readyState !== 1) {
-      try {
-        await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 3000 });
-      } catch (e) {}
+      return res.status(400).json({ error: 'Please provide full name, email, and password.' });
     }
 
-    let existingUser = null;
-    if (mongoose.connection.readyState === 1) {
-      try { existingUser = await User.findOne({ email: normEmail }); } catch (e) {}
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
     }
-    if (!existingUser) existingUser = inMemoryUsers.get(normEmail);
 
-    if (existingUser) {
+    if (userStore.has(email)) {
       return res.status(400).json({ error: 'User with this email already exists.' });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    let userId = 'usr-' + Date.now();
+    const userId = 'usr-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
 
-    if (mongoose.connection.readyState === 1) {
-      try {
-        const newUser = await User.create({ name, email: normEmail, password: hashedPassword });
-        userId = String(newUser._id);
-      } catch (e) {
-        inMemoryUsers.set(normEmail, { _id: userId, name, email: normEmail, password: hashedPassword });
-      }
-    } else {
-      inMemoryUsers.set(normEmail, { _id: userId, name, email: normEmail, password: hashedPassword });
-    }
+    const userObj = {
+      id: userId,
+      name,
+      email,
+      password: hashedPassword,
+      createdAt: new Date().toISOString()
+    };
 
-    const token = jwt.sign({ id: userId, name, email: normEmail }, JWT_SECRET, { expiresIn: '30d' });
-    return res.status(201).json({ token, user: { id: userId, name, email: normEmail } });
+    userStore.set(email, userObj);
+
+    const token = jwt.sign(
+      { id: userId, name, email },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    return res.status(201).json({
+      token,
+      user: { id: userId, name, email }
+    });
 
   } catch (err) {
+    console.error('[Register Serverless Error]', err);
     return res.status(500).json({ error: err.message || 'Registration failed.' });
   }
 };
