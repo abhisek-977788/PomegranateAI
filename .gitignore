@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+weights/*.pth
+
+# Node
+node_modules/
+dist/
+build/
+.env
+
+# Write helper scripts (scratch)
+write_*.py
+scratch_*.py
+test_write.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
