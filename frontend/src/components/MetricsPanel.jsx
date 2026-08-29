@@ -46,23 +46,29 @@ export function MetricsPanel() {
 
   useEffect(() => { fetchStats() }, [fetchStats])
 
-  const maturityData = (stats?.maturityDistribution || []).map((d, i) => ({
-    name: d._id || 'Unknown',
-    count: d.count,
-    fill: MATURITY_COLORS[i % MATURITY_COLORS.length],
-  }))
+  const maturityData = (stats?.maturityDistribution && stats.maturityDistribution.length > 0)
+    ? stats.maturityDistribution.map((d, i) => ({
+        name: d._id || 'Unknown',
+        count: d.count || 0,
+        fill: MATURITY_COLORS[i % MATURITY_COLORS.length],
+      }))
+    : [{ name: 'No Data', count: 0, fill: '#64748b' }]
 
-  const qualityData = (stats?.qualityDistribution || []).map((d, i) => ({
-    name: d._id || 'Unknown',
-    count: d.count,
-    fill: QUALITY_COLORS[i % QUALITY_COLORS.length],
-  }))
+  const qualityData = (stats?.qualityDistribution && stats.qualityDistribution.length > 0)
+    ? stats.qualityDistribution.map((d, i) => ({
+        name: d._id || 'Unknown',
+        count: d.count || 0,
+        fill: QUALITY_COLORS[i % QUALITY_COLORS.length],
+      }))
+    : [{ name: 'No Data', count: 0, fill: '#64748b' }]
 
-  const healthData = (stats?.healthDistribution || []).map((d, i) => ({
-    name: d._id || 'Unknown',
-    value: d.count,
-    fill: HEALTH_COLORS[i % HEALTH_COLORS.length],
-  }))
+  const healthData = (stats?.healthDistribution && stats.healthDistribution.length > 0)
+    ? stats.healthDistribution.map((d, i) => ({
+        name: d._id || 'Unknown',
+        value: d.count || 0,
+        fill: HEALTH_COLORS[i % HEALTH_COLORS.length],
+      }))
+    : [{ name: 'No Data', value: 0, fill: '#64748b' }]
 
   const s = stats?.summary || {}
 
