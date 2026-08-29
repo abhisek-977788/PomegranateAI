@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const password = body.password ? String(body.password) : ''
 
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Please provide full name, email, and password.' })
+      return res.status(400).json({ error: 'Please provide full name, email address, and password.' })
     }
 
     if (password.length < 6) {
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     }
 
     if (userStore.has(email)) {
-      return res.status(400).json({ error: 'User with this email already exists.' })
+      return res.status(400).json({ error: 'An account with this email already exists. Please Sign In instead.' })
     }
 
     const salt = await bcrypt.genSalt(10)
