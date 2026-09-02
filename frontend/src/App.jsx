@@ -4,6 +4,7 @@ import { MetricsPanel }        from './components/MetricsPanel'
 import { HistoryTable }         from './components/HistoryTable'
 import { AuthModal }            from './components/AuthModal'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { InspectionProvider }    from './context/InspectionContext'
 import { Activity, BarChart2, ClipboardList, LogIn, LogOut, User as UserIcon } from 'lucide-react'
 
 const TABS = [
@@ -122,7 +123,9 @@ function MainContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <MainContent />
+      <InspectionProvider>
+        <MainContent />
+      </InspectionProvider>
     </AuthProvider>
   )
 }

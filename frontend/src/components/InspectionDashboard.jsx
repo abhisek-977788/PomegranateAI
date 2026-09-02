@@ -1,21 +1,35 @@
 import React, { useState, useCallback } from 'react'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Trash2 } from 'lucide-react'
 import { UploadZone } from './UploadZone'
 import { ResultCard }  from './ResultCard'
 import { useInspection } from '../hooks/useInspection'
+import { useInspectionContext } from '../context/InspectionContext'
 
 export function InspectionDashboard() {
-  const { loading, error, results, uploadProgress, processImages, clearResults } = useInspection()
+  const { loading, error, results: currentResults, uploadProgress, processImages, clearResults: clearCurrent } = useInspection()
+  const { inspections, addInspections, clearInspections } = useInspectionContext()
   const [previews, setPreviews] = useState([])
 
   const handleProcess = useCallback(async (files) => {
     const urls = files.map(f => URL.createObjectURL(f))
     setPreviews(urls)
-    clearResults()
+    clearCurrent()
     try {
-      await processImages(files)
+      const res = await processImages(files)
+      if (res && res.results && res.results.length > 0) {
+        addInspections(res.results)
+      }
     } catch (_) {}
-  }, [processImages, clearResults])
+  }, [processImages, clearCurrent, addInspections])
+
+  // Combine current batch results with persistent inspections
+  const displayResults = currentResults.length > 0 ? currentResults : inspections
+
+  const handleClearAll = () => {
+    clearCurrent()
+    clearInspections()
+    setPreviews([])
+  }
 
   return (
     <div className="space-y-8">
@@ -42,7 +56,7 @@ export function InspectionDashboard() {
             <p className="text-red-300/90 text-sm mt-0.5 font-medium">
               {typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}
             </p>
-            {!error.includes('not a pomegranate') && (
+            {!String(error).includes('not a pomegranate') && (
               <p className="text-gray-500 text-xs mt-1">
                 Ensure the ML service is running at the configured URL.
               </p>
@@ -52,27 +66,28 @@ export function InspectionDashboard() {
       )}
 
       {/* Results grid */}
-      {results.length > 0 && (
+      {displayResults.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-200">
               Inspection Results
               <span className="ml-2 text-sm font-normal text-gray-400">
-                ({results.length} image{results.length > 1 ? 's' : ''})
+                ({displayResults.length} image{displayResults.length > 1 ? 's' : ''})
               </span>
             </h3>
             <button
-              onClick={clearResults}
-              className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+              onClick={handleClearAll}
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-400 transition-colors"
             >
-              Clear
+              <Trash2 size={14} />
+              Clear All
             </button>
           </div>
 
           {/* Routing summary badges */}
           <div className="flex flex-wrap gap-2 mb-6">
             {['ROUTE: PREMIUM EXPORT','ROUTE: DOMESTIC RETAIL','ROUTE: JUICE / AGRO-PROCESSING','REJECT / DISCARD','HOLD / RE-INSPECT'].map(action => {
-              const count = results.filter(r => (r.grading?.routingAction || r.sorting?.action) === action).length
+              const count = displayResults.filter(r => (r.grading?.routingAction || r.sorting?.action) === action).length
               if (count === 0) return null
               const colors = {
                 'ROUTE: PREMIUM EXPORT':          'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
@@ -90,11 +105,11 @@ export function InspectionDashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {results.map((result, idx) => (
+            {displayResults.map((result, idx) => (
               <ResultCard
-                key={idx}
+                key={result._id || idx}
                 result={result}
-                imageUrl={previews[idx]}
+                imageUrl={result.imageUrl || previews[idx]}
               />
             ))}
           </div>
@@ -102,7 +117,7 @@ export function InspectionDashboard() {
       )}
 
       {/* Empty state */}
-      {!loading && results.length === 0 && !error && (
+      {!loading && displayResults.length === 0 && !error && (
         <div className="text-center py-16 text-gray-600">
           <div className="text-6xl mb-4">🍎</div>
           <p className="text-lg font-medium">Upload pomegranate images to begin inspection</p>

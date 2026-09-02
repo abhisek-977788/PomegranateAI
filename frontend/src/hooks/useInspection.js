@@ -1,6 +1,15 @@
 import { useState, useCallback } from 'react'
 import { inspectionApi } from '../api/client'
 
+function fileToDataURL(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.onerror = () => resolve('')
+    reader.readAsDataURL(file)
+  })
+}
+
 export function useInspection() {
   const [loading,    setLoading]    = useState(false)
   const [error,      setError]      = useState(null)
@@ -15,11 +24,21 @@ export function useInspection() {
       if (batchNumber) form.append('batchNumber', batchNumber)
       form.append('cameraAngle', cameraAngle)
 
+      // Convert files to base64 Data URLs for thumbnail persistence
+      const dataUrls = await Promise.all(files.map(f => fileToDataURL(f)))
+
       const { data } = await inspectionApi.process(form, (e) => {
         if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100))
       })
-      setResults(data.results || [])
-      return data
+
+      const enrichedResults = (data.results || []).map((res, i) => ({
+        ...res,
+        imageUrl: dataUrls[i] || res.imageUrl || res.filename || '',
+        createdAt: res.createdAt || new Date().toISOString(),
+      }))
+
+      setResults(enrichedResults)
+      return { ...data, results: enrichedResults }
     } catch (err) {
       const raw = err.response?.data?.error || err.message || 'Request failed'
       const msg = typeof raw === 'string' ? raw : (raw?.message || JSON.stringify(raw))
