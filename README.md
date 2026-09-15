@@ -5,6 +5,19 @@
 
 ---
 
+## 🌐 Live Production Deployment & Links
+
+| Component | Link / Details | Status |
+| :--- | :--- | :---: |
+| ⚡ **Live Web Application (Vercel)** | [**https://frontend-amber-sigma-46.vercel.app**](https://frontend-amber-sigma-46.vercel.app) | 🟢 **LIVE** |
+| 📦 **GitHub Repository** | [**https://github.com/abhisek-977788/PomegranateAI.git**](https://github.com/abhisek-977788/PomegranateAI.git) | 🟢 **UP-TO-DATE** |
+| 🔑 **JWT Enhanced Secret Key** | `]oz2L*|IkL5*yZ-&A*G.2cLVAYcM;5H0uWwE%d$jE!o` | 🔒 **CONFIGURED** |
+| 💻 **Localhost Frontend** | `http://localhost:3000` | 🟢 **DEV SERVER** |
+| ⚡ **Localhost Express Backend** | `http://localhost:5000` | 🟢 **REST API** |
+| 🧠 **Localhost PyTorch ML Service** | `http://localhost:8000` | 🟢 **CUDA GPU ACTIVE** |
+
+---
+
 ## Architecture Overview
 
 ```
@@ -23,6 +36,20 @@
 │                   MongoDB (port 27017)  ←  Stored Inspections            │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Key Features
+
+- 🍎 **Gemini Pomegranate Image Validation**: Automatic pre-screening engine prevents non-pomegranate uploads.
+- ⚡ **Multi-Model Inference Pipeline**:
+  - **Disease Classifier**: EfficientNet-B0 (5 classes: Healthy, Alternaria, Anthracnose, Bacterial Blight, Cercospora).
+  - **Ripeness Classifier**: ViT-B/16 (5 stages: Bud, Flower, Early Fruit, Mid Growth, Mature).
+  - **Grading & Tiering**: Multi-Head EfficientNetV2-L (Weight Tiers G1-G3, Quality Tiers Q1-Q4).
+- 🔗 **Cross-Page Data Persistence**: Complete state synchronization across **Live Inspection**, **Analytics**, and **History** tabs so data is never lost.
+- 🔐 **User Authentication**: Secure JWT signup and login with MongoDB Atlas persistence and safe offline fallback.
+- 📊 **Real-Time Interactive Analytics**: Recharts distribution graphs, viability metrics, and defect rates.
+- 📜 **Historical Record Log**: Filterable table view with image thumbnail previews and routing action badges.
 
 ---
 
@@ -51,16 +78,24 @@ pomegranate_ai/
 │
 ├── backend/
 │   ├── server.js                # Express.js entry point
-│   ├── models/Inspection.js     # Mongoose schema
+│   ├── models/User.js           # User authentication schema
+│   ├── models/Inspection.js     # Mongoose inspection schema
 │   ├── routes/inspections.js    # Route declarations
 │   ├── controllers/
+│   │   ├── authController.js
 │   │   └── inspectionController.js
 │   ├── package.json
 │   └── Dockerfile
 │
 ├── frontend/
+│   ├── api/                     # Vercel Serverless Function Endpoints
+│   │   ├── auth/                # register.js, login.js, me.js
+│   │   └── inspections/         # process.js, stats.js, history.js
 │   ├── src/
 │   │   ├── App.jsx              # Layout + tab routing
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── InspectionContext.jsx
 │   │   ├── api/client.js        # Axios API client
 │   │   ├── hooks/useInspection.js
 │   │   └── components/
@@ -68,12 +103,12 @@ pomegranate_ai/
 │   │       ├── MetricsPanel.jsx         # Recharts analytics
 │   │       ├── HistoryTable.jsx         # Paginated history
 │   │       ├── ResultCard.jsx           # Per-image result card
-│   │       ├── BBoxOverlay.jsx          # Canvas bbox renderer
+│   │       ├── AuthModal.jsx            # Sign In / Registration modal
 │   │       └── UploadZone.jsx           # Drag-and-drop
 │   ├── package.json
 │   ├── vite.config.js
 │   ├── tailwind.config.js
-│   └── Dockerfile (Nginx)
+│   └── vercel.json              # Vercel deployment configuration
 │
 ├── weights/                     # Place .pth files here after training
 ├── docker-compose.yml
@@ -86,237 +121,30 @@ pomegranate_ai/
 
 ## Quick Start
 
-### Option A — Docker (Recommended for Production)
+### Option A — Development Mode (Windows / macOS)
 
 ```bash
-# 1. Copy environment file
-cp .env.example .env
+# 1. Start ML Microservice
+uvicorn ml_service.app:app --host 0.0.0.0 --port 8000
 
-# 2. Train models first (see Training section), then:
-docker-compose up --build
-
-# Services:
-#   Dashboard  →  http://localhost:3000
-#   API        →  http://localhost:5000
-#   ML Docs    →  http://localhost:8000/docs
-#   MongoDB    →  localhost:27017
-```
-
-### Option B — Development Mode (Windows)
-
-```bat
-# Run the one-click setup
-setup.bat
-
-# Activate Python venv
-.venv\Scripts\activate
-
-# Start ML service (new terminal)
-uvicorn ml_service.app:app --host 0.0.0.0 --port 8000 --reload
-
-# Start backend (new terminal)
+# 2. Start Express Backend API
 cd backend
 node server.js
 
-# Start frontend (new terminal)
+# 3. Start Vite React Frontend
 cd frontend
 npm run dev
 ```
 
-### Option B — Development Mode (Linux/macOS)
+### Option B — Docker Containerized Deployment
 
 ```bash
-chmod +x setup.sh && ./setup.sh
-source .venv/bin/activate
-uvicorn ml_service.app:app --host 0.0.0.0 --port 8000 --reload &
-cd backend && node server.js &
-cd frontend && npm run dev
+# Copy environment file
+cp .env.example .env
+
+# Build and launch all services
+docker-compose up --build
 ```
-
----
-
-## Phase 1 — Training the Models
-
-All three scripts must be run from the `pomegranate_ai/` directory with the virtual environment active.
-
-### 1. Disease / Defect Classifier (EfficientNet-B0)
-
-```bash
-python train_disease_classifier.py [--epochs 40] [--batch-size 32] [--lr 1e-3]
-```
-
-- **Input:** `d:\Deep\Pomegranate Diseases Dataset\` (5 class folders)
-- **Output:** `weights/disease_classifier.pth` + `weights/disease_label_map.json`
-- **Architecture:** EfficientNet-B0, frozen backbone, fine-tuned head
-- **Augmentation:** RandomResizedCrop, Flip, ColorJitter, Rotation
-- **Scheduler:** CosineAnnealing, AdamW, label smoothing=0.1
-
-### 2. Growth / Ripeness Classifier (ViT-B/16)
-
-```bash
-python train_ripeness_vit.py [--epochs 30] [--batch-size 32] [--lr 2e-5]
-```
-
-- **Input:** `d:\Deep\Pomegranate Images Dataset\VOC2007\` (VOC XML annotations)
-- **Output:** `weights/ripeness_vit.pth` + `weights/ripeness_label_map.json`
-- **Architecture:** ViT-B/16, last 4 encoder blocks + head unfrozen
-- **Labels:** Determined by dominant class in each image's VOC XML annotation
-- **Split:** Pre-defined train.txt / val.txt / test.txt (4683 / 587 / 587)
-
-### 3. Multi-Head Grading (EfficientNet-V2-L)
-
-```bash
-python train_multitask.py [--epochs 50] [--batch-size 16] [--lr 5e-4]
-```
-
-- **Input:** `d:\Deep\to upload\` (12 folders: G1_Q1 … G3_Q4)
-- **Output:** `weights/multitask_efficientnet.pth` + `weights/grading_label_map.json`
-- **Architecture:** EfficientNet-V2-L shared backbone + two FC heads
-- **Loss:** `L_total = 0.4 × CE(Weight) + 0.6 × CE(Quality)`
-- **Head A — Weight Tier:** G1 (300–400 g), G2 (200–300 g), G3 (100–200 g)
-- **Head B — Quality Tier:** Q1 (Export), Q2 (Retail), Q3 (Juice), Q4 (Reject)
-
-> **GPU strongly recommended for training.** CPU training is supported but will be slow (especially ViT and EfficientNet-V2-L).
-
----
-
-## Phase 2 — ML Microservice (FastAPI)
-
-Starts on `http://localhost:8000`
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Device, model load status, timestamp |
-| `/api/v1/models/status` | GET | Per-model weight status |
-| `/api/v1/predict` | POST | Multipart upload, returns full prediction JSON |
-| `/docs` | GET | Swagger UI |
-
-### Prediction Response Schema
-
-```json
-{
-  "predictions": [{
-    "filename": "img.jpg",
-    "health": {
-      "status": "Healthy",
-      "confidence": 0.9821,
-      "is_healthy": true,
-      "defect_count": 0,
-      "bboxes": [],
-      "all_probs": { "Healthy": 0.9821, "Alternaria": 0.005, ... }
-    },
-    "ripeness": {
-      "stage": "mature",
-      "confidence": 0.9341,
-      "is_mature": true,
-      "all_probs": { "mature": 0.9341, "mid-growth": 0.045, ... }
-    },
-    "grading": {
-      "weight_tier": "G1",
-      "weight_confidence": 0.8712,
-      "quality_tier": "Q1",
-      "quality_confidence": 0.7943
-    },
-    "sorting": {
-      "action": "ROUTE: PREMIUM EXPORT",
-      "badge_color": "gold"
-    },
-    "processing_time_ms": 312.4
-  }],
-  "batch_size": 1
-}
-```
-
-### Sorting Rule Engine
-
-| Condition | Action |
-|-----------|--------|
-| Infected OR Q4 | `REJECT / DISCARD` 🔴 |
-| Healthy + Mature + Q1 + G1 | `ROUTE: PREMIUM EXPORT` 🥇 |
-| Healthy + Mature + Q2 | `ROUTE: DOMESTIC RETAIL` 🟢 |
-| Healthy + Q3 | `ROUTE: JUICE / AGRO-PROCESSING` 🟠 |
-| Otherwise | `HOLD / RE-INSPECT` 🟡 |
-
----
-
-## Phase 3 — Express.js Backend API
-
-Starts on `http://localhost:5000`
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Server + MongoDB status |
-| `/api/inspections/process` | POST | Upload images → ML → store → return |
-| `/api/inspections/batches` | GET | Batch-level aggregated metrics |
-| `/api/inspections/history` | GET | Paginated history (filterable) |
-| `/api/inspections/stats` | GET | Global stats for dashboard |
-
-**History query params:** `page`, `limit`, `qualityTier`, `healthStatus`, `batchNumber`, `from`, `to`
-
----
-
-## Phase 4 — React Dashboard
-
-Three-tab layout at `http://localhost:3000`:
-
-| Tab | Description |
-|-----|-------------|
-| **Live Inspection** | Drag-and-drop upload, real-time bounding box overlay canvas, per-image result cards with health/ripeness/weight/quality status |
-| **Analytics** | Recharts bar + donut charts — Maturity Distribution, Quality Distribution, Health Breakdown; summary metric cards |
-| **History** | Paginated table, filterable by quality tier and health status, shows routing action badge |
-
----
-
-## Environment Variables
-
-Copy `.env.example` → `.env` and adjust:
-
-```env
-# MongoDB
-MONGO_URI=mongodb://mongodb:27017/pomegranate_db
-
-# Express backend
-PORT=5000
-CORS_ORIGIN=http://localhost:3000
-NODE_ENV=production
-
-# ML service
-ML_SERVICE_URL=http://ml-service:8000
-WEIGHTS_DIR=./weights
-
-# Frontend (Vite build-time)
-VITE_API_URL=http://localhost:5000/api
-```
-
----
-
-## GPU Support (Docker)
-
-Uncomment the `deploy.resources` block in `docker-compose.yml` for NVIDIA GPU:
-
-```yaml
-deploy:
-  resources:
-    reservations:
-      devices:
-        - driver: nvidia
-          count: 1
-          capabilities: [gpu]
-```
-
-Requires `nvidia-container-toolkit` installed on the host.
-
----
-
-## Model Weight Files (after training)
-
-| File | Size (est.) | Model |
-|------|------------|-------|
-| `weights/disease_classifier.pth` | ~20 MB | EfficientNet-B0 |
-| `weights/ripeness_vit.pth` | ~340 MB | ViT-B/16 |
-| `weights/multitask_efficientnet.pth` | ~480 MB | EfficientNet-V2-L |
-
-> The ML service runs with **random weights** if `.pth` files are missing — predictions will be meaningless but the pipeline architecture is fully functional for testing.
 
 ---
 
@@ -324,13 +152,13 @@ Requires `nvidia-container-toolkit` installed on the host.
 
 | Layer | Technology |
 |-------|-----------|
-| DL Training | PyTorch 2.x, torchvision, EfficientNet-B0/V2-L, ViT-B/16 |
-| Inference Service | FastAPI, Uvicorn, Pydantic |
-| Database | MongoDB 7 + Mongoose ODM |
-| Backend API | Express.js 4, Multer, Axios, Morgan |
-| Frontend | React 18, Vite 5, Tailwind CSS 3, Recharts, Lucide Icons, react-dropzone |
-| Containerization | Docker Compose (multi-service), Nginx |
+| **Deep Learning** | PyTorch 2.x, torchvision, EfficientNet-B0/V2-L, ViT-B/16 |
+| **Inference Service** | FastAPI, Uvicorn, Pydantic, Python-Multipart |
+| **Backend API Gateway** | Node.js, Express.js, JWT, bcryptjs, Mongoose ODM |
+| **Database** | MongoDB Atlas / MongoDB 7 |
+| **Frontend Framework** | React 18, Vite 5, Tailwind CSS 3, Recharts, Lucide Icons |
+| **Cloud Deployment** | Vercel Serverless Functions + Render |
 
 ---
 
-*Built for automated conveyor-line pomegranate sorting — disease screening, ripeness grading, weight tiering, and quality routing in a unified pipeline.*
+*PomegranateAI &mdash; Automated Grading System for Pomegranate Ripeness, Weight Tiering, and Disease Screening.*
