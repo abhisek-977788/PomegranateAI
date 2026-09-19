@@ -108,7 +108,7 @@ export function ResultCard({ result, imageUrl }) {
         <StatCard
           icon={Shield}
           label="Health"
-          value={healthStatus}
+          value={healthStatus.replace(/_/g, ' ')}
           subValue={(healthConfidence * 100).toFixed(0) + '% confidence'}
           colorClass={healthClass}
         />

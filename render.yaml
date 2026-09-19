@@ -1,18 +1,15 @@
 services:
   - type: web
-    name: pomegranate-backend
-    env: node
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: node server.js
+    name: pomegranate-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn ml_service.app:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: PORT
-        value: 5000
-      - key: NODE_ENV
-        value: production
-      - key: JWT_SECRET
-        value: "]oz2L*|IkL5*yZ-&A*G.2cLVAYcM;5H0uWwE%d$jE!o"
-      - key: MONGO_URI
-        value: "mongodb+srv://abhisekpatel8917_db_user:Abhi1234@cluster0.epxf3si.mongodb.net/pomegranate_db?retryWrites=true&w=majority&appName=Cluster0"
-      - key: ML_SERVICE_URL
-        value: "http://localhost:8000"
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: WEIGHTS_DIR
+        value: ./weights

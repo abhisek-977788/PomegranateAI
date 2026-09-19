@@ -11,6 +11,9 @@ node_modules/
 dist/
 build/
 .env
+**/.env
+!.env.example
+!**/.env.example
 
 # Write helper scripts (scratch)
 write_*.py

@@ -49,6 +49,70 @@ export function UploadZone({ onProcess, loading, uploadProgress }) {
         </p>
       </div>
 
+      {/* Quick Sample Selector */}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Try Sample:</span>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            try {
+              const res = await fetch('/samples/healthy_pomegranate.jpg')
+              const blob = await res.blob()
+              const file = new File([blob], 'healthy_pomegranate.jpg', { type: 'image/jpeg' })
+              setFiles([file])
+              setPreviews([URL.createObjectURL(file)])
+            } catch (err) {
+              console.error('Failed to load sample', err)
+            }
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-emerald-500/30 text-emerald-300 text-xs font-medium transition-colors"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          Healthy Pomegranate
+        </button>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            try {
+              const res = await fetch('/samples/bacterial_blight.png')
+              const blob = await res.blob()
+              const file = new File([blob], 'bacterial_blight_sample.png', { type: 'image/png' })
+              setFiles([file])
+              setPreviews([URL.createObjectURL(file)])
+            } catch (err) {
+              console.error('Failed to load sample', err)
+            }
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-red-500/30 text-red-300 text-xs font-medium transition-colors"
+        >
+          <span className="w-2 h-2 rounded-full bg-red-400"></span>
+          Bacterial Blight (Telya)
+        </button>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            try {
+              const res = await fetch('/samples/sample_pomegranate.png')
+              const blob = await res.blob()
+              const file = new File([blob], 'diseased_sample.png', { type: 'image/png' })
+              setFiles([file])
+              setPreviews([URL.createObjectURL(file)])
+            } catch (err) {
+              console.error('Failed to load sample', err)
+            }
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-amber-500/30 text-amber-300 text-xs font-medium transition-colors"
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+          Defective Pomegranate
+        </button>
+      </div>
+
       {previews.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {previews.map((url, i) => (

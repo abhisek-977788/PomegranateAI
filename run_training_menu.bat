@@ -1,6 +1,7 @@
 @echo off
 title PomegranateAI Model Trainer
-cd /d d:\Deep\pomegranate_ai
+cd /d "%~dp0"
+if exist .venv\Scripts\activate.bat call .venv\Scripts\activate.bat
 :MENU
 cls
 echo ============================================================
